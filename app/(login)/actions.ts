@@ -40,7 +40,7 @@ const signInSchema = z.object({
 export const signIn = validatedAction(signInSchema, async (data, formData) => {
   const { email, password } = data;
 
-  const user = await User.findOne({ email }).lean() as IUser | null;
+  const user = await User.findOne({ email })
   if (!user) {
     return {
       error: 'Invalid email or password. Please try again.',

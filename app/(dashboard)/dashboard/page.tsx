@@ -51,7 +51,6 @@ export default function Dashboard() {
     e.preventDefault();
     if (files.length === 0) return;
 
-    // Validate schemaString if providedInvalid JSON schema provided
     if (schemaString.trim()) {
       try {
         JSON.parse(schemaString);

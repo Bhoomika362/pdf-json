@@ -40,7 +40,7 @@ export async function getActivityLogs() {
     .populate('userId', 'name email')
     .sort({ timestamp: -1 })
     .limit(10)
-    .lean();
+    // .lean();
 
   return logs.map(log => ({
     id: log._id.toString(),
