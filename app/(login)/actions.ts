@@ -7,6 +7,7 @@ import {
   ActivityLog,
   type NewUser,
   type NewActivityLog,
+  type IUser,
   ActivityType,
 } from '@/lib/db/schema';
 import { comparePasswords, hashPassword, setSession } from '@/lib/auth/session';
@@ -39,7 +40,7 @@ const signInSchema = z.object({
 export const signIn = validatedAction(signInSchema, async (data, formData) => {
   const { email, password } = data;
 
-  const user = await User.findOne({ email }).lean();
+  const user = await User.findOne({ email }).lean() as IUser | null;
   if (!user) {
     return {
       error: 'Invalid email or password. Please try again.',
