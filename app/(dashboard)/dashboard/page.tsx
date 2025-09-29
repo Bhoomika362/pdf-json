@@ -78,7 +78,6 @@ export default function Dashboard() {
       if (result.success) {
         setConvertedData({
           filename: result.filename,
-          schema: result.schema,
           extractedData: result.data,
         });
         toast.success("PDF converted to JSON successfully!");
