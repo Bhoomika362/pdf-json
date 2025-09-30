@@ -11,7 +11,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { processPDFWithSchema } from "./actions";
+import { processPDFWithSchema } from "./agent";
 
 export default function Dashboard() {
   const [files, setFiles] = useState<File[]>([]);
@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [convertedData, setConvertedData] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
   const [schemaString, setSchemaString] = useState("");
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -64,6 +65,10 @@ export default function Dashboard() {
 
     setIsLoading(true);
     try {
+      // Create PDF preview URL
+      const pdfUrl = URL.createObjectURL(files[0]);
+      setPdfPreviewUrl(pdfUrl);
+
       // Encode the PDF file as base64
       const encodedFile = await encodeFileAsBase64(files[0]);
 
@@ -75,10 +80,7 @@ export default function Dashboard() {
       );
 
       if (result.success) {
-        setConvertedData({
-          filename: result.filename,
-          extractedData: result.data,
-        });
+        setConvertedData(result.data); // Store just the extracted data
         toast.success("PDF converted to JSON successfully!");
       } else {
         toast.error(result.error || "Failed to process PDF");
@@ -95,11 +97,18 @@ export default function Dashboard() {
     setFiles([]);
     setConvertedData(null);
     setSchemaString("");
+    
+    // Clean up PDF preview URL
+    if (pdfPreviewUrl) {
+      URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
   };
 
   const downloadJSON = () => {
     if (!convertedData || !isClient) return;
 
+    // The download will now contain just the clean data
     const dataStr = JSON.stringify(convertedData, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
@@ -232,32 +241,58 @@ export default function Dashboard() {
 
         {/* Results Card */}
         {convertedData && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl">Conversion Results</CardTitle>
-                  <CardDescription>
-                    Successfully converted {convertedData.filename}
-                  </CardDescription>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* PDF Preview Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">{files[0].name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-100 rounded-lg overflow-hidden">
+                  {pdfPreviewUrl ? (
+                    <iframe
+                      src={pdfPreviewUrl}
+                      className="w-full h-96 border-0"
+                      title="PDF Preview"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-96 text-gray-500">
+                      <div className="text-center">
+                        <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>PDF preview not available</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <Button
-                  onClick={downloadJSON}
-                  className="flex items-center space-x-2"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Download JSON</span>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <pre className="text-sm text-gray-700 overflow-auto max-h-96">
-                  {JSON.stringify(convertedData, null, 2)}
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Conversion Results Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl">Conversion Results</CardTitle>
+                    
+                  </div>
+                  <Button
+                    onClick={downloadJSON}
+                    className="flex items-center space-x-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download JSON</span>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <pre className="text-sm text-gray-700 overflow-auto max-h-96">
+                    {JSON.stringify(convertedData, null, 2)}
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>
