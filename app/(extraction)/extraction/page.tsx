@@ -11,7 +11,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { processPDFWithSchema } from "./agent";
 import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
@@ -56,11 +55,12 @@ export default function Dashboard() {
 
     setIsLoading(true);
     try {
-      // Call the server action to process the PDF
-      const result = await processPDFWithSchema(
-        files[0],
-        schemaString.trim() || undefined
-      );
+      const fd = new FormData();
+      fd.append("file", files[0]);
+      if (schemaString.trim()) fd.append("schema", schemaString.trim());
+
+      const res = await fetch("/api/extract", { method: "POST", body: fd });
+      const result = await res.json();
 
       if (result.success) {
         toast.success("PDF converted to JSON successfully!");
